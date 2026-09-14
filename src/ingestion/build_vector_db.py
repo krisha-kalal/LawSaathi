@@ -1,85 +1,32 @@
+import os
+import json
 import chromadb
-from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer
-
+from chunker import extract_clean_chunks
 
 PDF_PATH = "data/raw/constitution_of_india.pdf"
 
+if not os.path.exists(PDF_PATH):
+    raise FileNotFoundError(f"Missing source file at {PDF_PATH}")
 
-def chunk_text(text, chunk_size=1000, overlap=200):
-    chunks = []
-
-    start = 0
-
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start += chunk_size - overlap
-
-    return chunks
-
-
-reader = PdfReader(PDF_PATH)
-
-pages = []
-
-for page_number, page in enumerate(reader.pages):
-    text = page.extract_text()
-
-    if text:
-        pages.append({
-            "page": page_number + 1,
-            "text": text
-        })
-
+documents, metadatas, ids = extract_clean_chunks(PDF_PATH)
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
+client = chromadb.PersistentClient(path="chroma_db")
 
-client = chromadb.PersistentClient(
-    path="chroma_db"
-)
+try:
+    client.delete_collection(name="constitution")
+except Exception:
+    pass
 
-collection = client.get_or_create_collection(
-    name="constitution"
-)
+collection = client.create_collection(name="constitution")
 
+print(f"Generating embeddings for {len(documents)} cleaned body chunks...")
+embeddings = model.encode(documents, show_progress_bar=True).tolist()
 
-documents = []
-metadatas = []
-ids = []
+os.makedirs("data/processed", exist_ok=True)
+with open("data/processed/chunks.json", "w", encoding="utf-8") as f:
+    json.dump({"documents": documents, "metadatas": metadatas, "ids": ids}, f, indent=2, ensure_ascii=False)
 
-
-for page in pages:
-
-    chunks = chunk_text(page["text"])
-
-    for chunk_number, chunk in enumerate(chunks):
-
-        documents.append(chunk)
-
-        metadatas.append({
-            "source": "Constitution of India",
-            "page": page["page"],
-            "chunk": chunk_number
-        })
-
-        ids.append(
-            f"page_{page['page']}_chunk_{chunk_number}"
-        )
-
-
-embeddings = model.encode(
-    documents,
-    show_progress_bar=True
-).tolist()
-
-
-collection.add(
-    ids=ids,
-    documents=documents,
-    embeddings=embeddings,
-    metadatas=metadatas
-)
-
-
-print("Total documents:", collection.count())
+collection.add(ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas)
+print(f"Index clean. Total indexed chunks: {collection.count()}")
