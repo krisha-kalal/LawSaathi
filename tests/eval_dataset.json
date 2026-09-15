@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "question": "What are the fundamental duties?",
+    "expected_page": 56
+  },
+  {
+    "id": 2,
+    "question": "Article 21",
+    "expected_page": 42
+  },
+  {
+    "id": 3,
+    "question": "Summarize the Ninth Schedule",
+    "expected_page": 358
+  },
+  {
+    "id": 4,
+    "question": "Freedom of speech and expression",
+    "expected_page": 40
+  },
+  {
+    "id": 5,
+    "question": "Equality before law under Article 14",
+    "expected_page": 37
+  }
+]
