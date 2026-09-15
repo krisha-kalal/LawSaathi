@@ -84,13 +84,10 @@ python src/main.py
 * [x] **Day 4:** Source metadata, citations & grounding
 * [x] **Day 5:** BM25 + dense hybrid retrieval
 * [x] **Day 6:** Cross-Encoder re-ranking
-
-### Coming Next
-
-* [ ] FastAPI API
-* [ ] Agentic workflows with LangGraph
-* [ ] RAG evaluation & retrieval metrics
-* [ ] Testing, Docker & CI/CD
+* [x] FastAPI API
+* [x] Agentic workflows with LangGraph
+* [x] RAG evaluation & retrieval metrics
+* [x] Testing, Docker & CI/CD
 
 ## 🌱 Open Source
 
