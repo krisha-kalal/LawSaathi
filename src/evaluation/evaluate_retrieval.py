@@ -10,8 +10,14 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-# Import retrieval engine pipeline
-from rag.pipeline import answer_question
+# Import search retrieval directly without invoking Gemini LLM API calls
+from rag.pipeline import hybrid_search, rerank_chunks
+
+def retrieve_documents(question: str, top_candidates: int = 50, final_top_k: int = 10):
+    """Retrieves and re-ranks documents without triggering LLM generation."""
+    candidate_indices, candidate_metadatas = hybrid_search(question, top_candidates)
+    reranked_metadatas = rerank_chunks(question, candidate_indices, candidate_metadatas, final_top_k)
+    return reranked_metadatas
 
 def evaluate_retriever(dataset_path: Path, top_k: int = 10):
     if not dataset_path.exists():
@@ -31,8 +37,8 @@ def evaluate_retriever(dataset_path: Path, top_k: int = 10):
         query = item["question"]
         target_page = item["expected_page"]
 
-        # Run pipeline retrieval
-        _, metadata_list = answer_question(query, top_candidates=50, final_top_k=top_k)
+        # Run pipeline search retrieval only
+        metadata_list = retrieve_documents(query, top_candidates=50, final_top_k=top_k)
         retrieved_pages = [meta.get("page", 0) for meta in metadata_list]
 
         # Calculate Recall@K
