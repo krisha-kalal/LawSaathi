@@ -7,7 +7,8 @@ load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
-    raise ValueError("GEMINI_API_KEY is missing from .env file.")
+    # Fallback message for CI/CD environments if secret is missing
+    raise ValueError("GEMINI_API_KEY is missing. Ensure it is set in .env or GitHub Secrets.")
 
 client = genai.Client(api_key=api_key)
 

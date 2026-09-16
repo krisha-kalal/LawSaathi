@@ -1,5 +1,6 @@
-import streamlit as st
+﻿import streamlit as st
 import requests
+import os
 
 # 1. Page Configuration
 st.set_page_config(
@@ -12,6 +13,14 @@ API_URL = "http://127.0.0.1:8000/query"
 
 # 2. Sidebar Configuration
 st.sidebar.title("⚖️ LawSaathi Dashboard")
+
+# Document Selector
+doc_option = st.sidebar.selectbox(
+    "Select Legal Corpus",
+    ["All Documents", "Constitution Of India", "Bharatiya Nyaya Sanhita", "Indian Contract Act"]
+)
+selected_filter = None if doc_option == "All Documents" else doc_option
+
 st.sidebar.markdown("""
 **Domain-Specific Legal RAG Engine**
 - **Document**: Constitution of India
@@ -56,6 +65,7 @@ if prompt := st.chat_input("Ask a legal question... (e.g., 'What is Article 21?'
             try:
                 payload = {
                     "question": prompt,
+                    "document_filter": selected_filter,
                     "top_candidates": top_candidates,
                     "final_top_k": final_top_k
                 }
