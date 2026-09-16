@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 from pathlib import Path
 import numpy as np
@@ -10,21 +11,8 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-# Dynamically handle function imports based on pipeline layout
-try:
-    from rag.pipeline import rerank_hybrid_search as retrieve_documents
-except ImportError:
-    try:
-        from rag.pipeline import hybrid_search, rerank_chunks
-        def retrieve_documents(question: str, top_candidates: int = 50, final_top_k: int = 10):
-            candidate_indices, candidate_metadatas = hybrid_search(question, top_candidates)
-            return rerank_chunks(question, candidate_indices, candidate_metadatas, final_top_k)
-    except ImportError:
-        from retrieval.search import hybrid_search
-        from rag.pipeline import rerank_chunks
-        def retrieve_documents(question: str, top_candidates: int = 50, final_top_k: int = 10):
-            candidate_indices, candidate_metadatas = hybrid_search(question, top_candidates)
-            return rerank_chunks(question, candidate_indices, candidate_metadatas, final_top_k)
+# Import the core hybrid search function from your retrieval module
+from retrieval.search import rerank_hybrid_search as retrieve_documents
 
 def evaluate_retriever(dataset_path: Path, top_k: int = 10):
     if not dataset_path.exists():
@@ -42,11 +30,13 @@ def evaluate_retriever(dataset_path: Path, top_k: int = 10):
 
     for item in eval_set:
         query = item["question"]
-        target_page = item["expected_page"]
+        target_page = int(item["expected_page"])
 
-        # Run retrieval engine
-        metadata_list = retrieve_documents(query, top_candidates=50, final_top_k=top_k)
-        retrieved_pages = [meta.get("page", 0) for meta in metadata_list]
+        # Run retrieval engine (returns a formatted string block of pages)
+        retrieved_context = retrieve_documents(query, top_candidates=30, final_top_k=top_k)
+        
+        # Parse out all "[Page X]:" occurrences from the returned text block
+        retrieved_pages = [int(p) for p in re.findall(r"\[Page (\d+)\]:", retrieved_context)]
 
         # Calculate Recall@K
         hit = target_page in retrieved_pages
