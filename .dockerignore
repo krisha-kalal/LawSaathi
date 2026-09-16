@@ -1,5 +1,4 @@
 .venv
-chroma_db
 .git
 __pycache__
 *.pyc

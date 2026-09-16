@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-API_URL = "http://127.0.0.1:8000/query"
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/query")
 
 # 2. Sidebar Configuration
 st.sidebar.title("⚖️ LawSaathi Dashboard")
@@ -69,7 +69,7 @@ if prompt := st.chat_input("Ask a legal question... (e.g., 'What is Article 21?'
                     "top_candidates": top_candidates,
                     "final_top_k": final_top_k
                 }
-                response = requests.post(API_URL, json=payload, timeout=30)
+                response = requests.post(API_URL, json=payload, timeout=120)
                 
                 if response.status_code == 200:
                     data = response.json()

@@ -1,28 +1,34 @@
 # LawSaathi ⚖️
 
-**LawSaathi** is an open-source, full-stack AI-powered legal question-answering system built using **Retrieval-Augmented Generation (RAG)**. It processes legal documents like the Constitution of India, retrieves relevant statutory provisions, and generates grounded answers with exact source citations.
+**LawSaathi** is an open-source, full-stack AI-powered legal question-answering system built using **Retrieval-Augmented Generation (RAG)**. It processes legal corpora (including the Constitution of India and related statutory documents), retrieves relevant provisions via multi-stage hybrid search, and generates grounded answers with exact page-level source citations.
 
-The project focuses on building and evaluating modern RAG architecture concepts including **layout-aware text cleaning, dense vector embeddings, ChromaDB, BM25 keyword search, hybrid retrieval, Cross-Encoder re-ranking, LLM prompt grounding, REST APIs, agentic tool routing, automated retrieval evaluation, Docker containerization, and a Streamlit web interface**.
+The project implements a modern RAG architecture featuring **layout-aware multi-document PDF ingestion, dense vector embeddings via ChromaDB, BM25 keyword search, Cross-Encoder re-ranking, LLM prompt grounding, FastAPI REST endpoints, LangGraph agentic tool routing, automated retrieval metrics (Recall@K / MRR), multi-container Docker Compose orchestration, and a Streamlit UI**.
+
+---
 
 ## 🚀 Features
 
-* 📄 **Layout-Aware PDF Ingestion**: Text extraction using PyMuPDF with automated Table of Contents (TOC) dot-leader filtering and Devanagari/Hindi script stripping.
-* ✂️ **Overlapping Parent Chunking**: Structured text splitting to preserve statutory context boundaries.
+* 📄 **Multi-Document Ingestion**: Scalable PDF parsing using PyMuPDF (`pymupdf`) with automated Table of Contents (TOC) filtering and Devanagari/Hindi script stripping.
+* ✂️ **Overlapping Parent Chunking**: Context-aware text splitting preserving statutory article and section boundaries.
 * 🔎 **Dense Semantic Search**: Vector embeddings generated via `all-MiniLM-L6-v2` stored in ChromaDB.
-* 🔤 **Sparse BM25 Search**: Keyword-based retrieval via `rank_bm25` to capture exact statutory numbers and terms.
-* 🔀 **Hybrid Retrieval Pipeline**: Combines dense semantic vectors and sparse BM25 scores.
-* 🎯 **Two-Stage Re-Ranking**: Employs a Cross-Encoder (`ms-marco-MiniLM-L-6-v2`) to re-score candidates for high-precision context selection.
-* 🤖 **Gemini 3.6 Flash Integration**: Fast LLM generation constrained by strict grounding rules to eliminate hallucinations.
-* 📚 **Source & Page Citations**: Formats all factual assertions with clear `[Source X] (Page Y)` citations.
+* 🔤 **Sparse BM25 Search**: Exact keyword retrieval via `rank_bm25` targeting specific legal terms and article numbers.
+* 🔀 **Hybrid Retrieval Engine**: Fuses dense semantic vector search with sparse BM25 sparse keyword rankings.
+* 🎯 **Two-Stage Re-Ranking**: Employs a Cross-Encoder (`ms-marco-MiniLM-L-6-v2`) to re-score candidate chunks for high-precision context selection.
+* 🤖 **Gemini 3.6 Flash Integration**: Fast LLM generation backed by strict grounding templates to eliminate hallucinations, complete with exponential backoff handling for server load spikes.
+* 📚 **Source & Page Citations**: Formats all factual output assertions with clear `[Source X] (Page Y)` citations.
 * ⚡ **FastAPI REST API**: Asynchronous API server with structured Pydantic schemas and interactive Swagger UI documentation.
-* 🤖 **Agentic Tool Routing**: Intelligent workflow node using LangChain/LangGraph concepts to route legal vs. non-legal queries.
-* 📊 **Automated Evaluation Metrics**: Evaluation engine calculating Recall@K and Mean Reciprocal Rank (MRR) over benchmark query datasets.
-* 🖥️ **Streamlit Chat Interface**: Web UI featuring chat history, page-level citation badges, and real-time retrieval parameter sliders.
-* 🐳 **Production Polish & Docker**: Complete containerized environment with Dockerfile and GitHub Actions CI workflow setup.
+* 🤖 **Agentic Tool Routing**: Intelligent workflow node using LangGraph concepts to handle domain routing and fallback logic.
+* 📊 **Automated CI Evaluation**: Benchmark engine computing Recall@K and Mean Reciprocal Rank (MRR) over ground-truth evaluation datasets in GitHub Actions.
+* 🖥️ **Streamlit Chat Interface**: Web UI featuring chat history, dynamic response tuning, and citation breakdown.
+* 🐳 **Multi-Container Docker Stack**: Dual-container setup (`FastAPI` backend + `Streamlit` frontend) orchestrated seamlessly via `docker-compose`.
+
+---
 
 ## 🛠️ Tech Stack
 
-**Python · PyMuPDF · Sentence Transformers · ChromaDB · BM25 · Cross-Encoder · Google Gemini API · FastAPI · LangChain/LangGraph · Streamlit · Docker · GitHub Actions**
+**Python · PyMuPDF · Sentence Transformers · ChromaDB · BM25 · Cross-Encoder · Google Gemini API · FastAPI · LangChain/LangGraph · Streamlit · Docker & Docker Compose · GitHub Actions**
+
+---
 
 ## 📁 Project Structure
 
@@ -30,13 +36,13 @@ The project focuses on building and evaluating modern RAG architecture concepts 
 Lawsaathi/
 ├── .github/
 │   └── workflows/
-│       └── test.yml            # GitHub Actions CI workflow
-├── chroma_db/                  # Local persistent ChromaDB storage
+│       └── test.yml            # GitHub Actions CI/CD workflow
+├── chroma_db/                  # Local persistent ChromaDB vector store
 ├── data/
 │   ├── processed/
-│   │   └── chunks.json         # Text chunks and metadata index cache
+│   │   └── chunks.json         # Processed chunks and metadata index cache
 │   └── raw/
-│       └── constitution_of_india.pdf
+│       └── constitution_of_india.pdf  # Raw legal PDF documents
 ├── src/
 │   ├── api/
 │   │   ├── app.py              # FastAPI application server & routes
@@ -47,7 +53,7 @@ Lawsaathi/
 │   ├── evaluation/
 │   │   └── evaluate_retrieval.py # Automated Recall@K & MRR evaluation engine
 │   ├── ingestion/
-│   │   ├── build_vector_db.py  # DB population script
+│   │   ├── build_vector_db.py  # Multi-document ingestion script
 │   │   └── chunker.py          # TOC-filtering & layout-aware text splitter
 │   ├── llm/
 │   │   └── gemini.py           # Gemini 3.6 Flash client integration
@@ -55,20 +61,25 @@ Lawsaathi/
 │   │   ├── pipeline.py         # Re-ranked hybrid retrieval pipeline
 │   │   └── prompt.py           # Strict legal prompt grounding templates
 │   ├── retrieval/
-│   │   └── search.py           # Isolated search debugging script
+│   │   └── search.py           # Standalone hybrid search module
 │   ├── ui/
 │   │   └── app.py              # Streamlit web application interface
 │   └── main.py                 # Interactive CLI entry point
 ├── tests/
-│   ├── eval_dataset.json       # Ground-truth evaluation dataset
-│   └── test_agent.py          # Agent routing test script
+│   ├── eval_dataset.json       # Ground-truth retrieval benchmark dataset
+│   └── test_agent.py          # Agent routing test suite
+├── .dockerignore
 ├── .env
 ├── .gitignore
-├── Dockerfile                  # Containerization specification
+├── Dockerfile                  # CPU-optimized Docker build spec
+├── docker-compose.yml          # Multi-container orchestration spec
 ├── README.md
 └── requirements.txt
+```
 
-## ⚙️ Setup
+---
+
+## ⚙️ Local Setup
 
 ### 1. Clone the Repository
 
@@ -77,13 +88,13 @@ git clone https://github.com/your-username/Lawsaathi.git
 cd Lawsaathi
 ```
 
-### 2. Create a Virtual Environment
+### 2. Create and Activate Virtual Environment
+
+Create the environment:
 
 ```bash
 python -m venv .venv
 ```
-
-### 3. Activate the Virtual Environment
 
 **Windows PowerShell:**
 
@@ -97,13 +108,13 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 4. Install Dependencies
+### 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Configure the Gemini API Key
+### 4. Configure Environment Variables
 
 Create a `.env` file in the project root:
 
@@ -113,78 +124,91 @@ GEMINI_API_KEY=your_gemini_api_key_here
 
 Do not commit `.env` or expose your API key publicly.
 
+---
+
 ## ▶️ Execution & Usage
 
 ### 1. Build the Vector Database
 
-Extract, clean, chunk, embed, and index the Constitution:
+Ingest, clean, chunk, embed, and index the PDF documents stored in `data/raw/`:
 
 ```bash
 python src/ingestion/build_vector_db.py
 ```
 
-### 2. Run the CLI Interface
+### 2. Run Retrieval Benchmark Evaluation
 
-Start the interactive legal question-answering system:
-
-```bash
-python src/main.py
-```
-
-### 3. Start the FastAPI Backend
-
-Launch the REST API:
+Evaluate retrieval performance using Recall@K and MRR:
 
 ```bash
-uvicorn src.api:app --reload
+python src/evaluation/evaluate_retrieval.py
 ```
 
-The API will be available at:
+### 3. Launch the FastAPI REST API
 
-```text
-http://127.0.0.1:8000
+```bash
+uvicorn src.api.app:app --reload
 ```
 
-Interactive Swagger documentation:
+**API:** `http://127.0.0.1:8000`
 
-```text
-http://127.0.0.1:8000/docs
-```
+**Swagger Documentation:** `http://127.0.0.1:8000/docs`
 
-### 4. Start the Streamlit Interface
-
-Launch the browser-based LawSaathi interface:
+### 4. Launch the Streamlit Web Interface
 
 ```bash
 streamlit run src/ui/app.py
 ```
 
-### 5. Run Retrieval Evaluation
+**UI:** `http://localhost:8501`
 
-Run the evaluation pipeline:
+---
 
-```bash
-python tests/evaluate_retrieval.py
-```
+## 🐳 Docker Deployment
 
-The evaluation compares retrieval approaches using:
+LawSaathi can be run as a multi-container application using Docker Compose.
 
-* Recall@K
-* Mean Reciprocal Rank (MRR)
-
-### 6. Run with Docker
-
-Build the Docker image:
+### Start the Full Stack
 
 ```bash
-docker build -t lawsaathi .
+docker compose up --build
 ```
 
-Run the container:
+This starts:
+
+* **FastAPI backend**
+* **Streamlit frontend**
+
+### Access the Services
+
+* 🌐 **Streamlit UI:** `http://localhost:8501`
+* ⚡ **FastAPI API:** `http://localhost:8000`
+* 📖 **Swagger Docs:** `http://localhost:8000/docs`
+
+### Stop the Stack
 
 ```bash
-docker run -p 8000:8000 --env-file .env lawsaathi
+docker compose down
 ```
+
+---
+
+## 🧪 CI/CD Pipeline
+
+The repository includes automated testing through **GitHub Actions** using `.github/workflows/test.yml`.
+
+The CI workflow runs on pushes and pull requests targeting the `main` branch.
+
+The workflow:
+
+1. Sets up a Python 3.11 environment on Ubuntu.
+2. Installs the required dependencies.
+3. Builds the ChromaDB vector index from the legal document corpus.
+4. Runs the retrieval evaluation pipeline.
+5. Executes automated tests.
+6. Verifies the project before changes are merged.
+
+---
 
 ## 🌱 Open Source
 
@@ -194,14 +218,17 @@ The project emphasizes:
 
 * Modular architecture
 * Reproducible experiments
+* Hybrid retrieval
 * Retrieval evaluation
 * Source-grounded generation
+* Agentic workflows
 * Automated testing
 * Containerized deployment
 * Clear documentation
-* Incremental development
 
 Contributions, issues, and suggestions are welcome.
+
+---
 
 ## ⚠️ Disclaimer
 

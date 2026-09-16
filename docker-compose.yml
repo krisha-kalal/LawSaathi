@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: lawsaathi_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000
+
+  frontend:
+    build: .
+    container_name: lawsaathi_frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://backend:8000/query
+    depends_on:
+      - backend
+    command: python -m streamlit run src/ui/app.py --server.port=8501 --server.address=0.0.0.0

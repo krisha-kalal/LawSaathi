@@ -2,20 +2,20 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Prevent Python from writing .pyc files and buffering stdout
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1
 ENV TOKENIZERS_PARALLELISM=false
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
 
-# Install Python packages
 COPY requirements.txt .
+
+# Install CPU-only PyTorch to reduce image size and build time
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application source code and indexed database
+# Copy source code and pre-built vector index
 COPY . .
 
 EXPOSE 8000
